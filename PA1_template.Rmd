@@ -1,4 +1,5 @@
 ---
+
 title: "Reproducible Research: Peer Assessment 1"
 output: 
   html_document:
@@ -7,19 +8,58 @@ output:
 
 
 ## Loading and preprocessing the data
-
-
+```{r}
+Sys.setlocale("LC_ALL","C")
+activity<-read.csv("activity.csv",colClasses=c("integer","Date","integer"))
+summary(activity)
+```
 
 ## What is mean total number of steps taken per day?
-
+```{r}
+hist(tapply(activity$steps,activity$date,sum,na.rm=TRUE),main = "Number of steps per day",xlab = "Number of steps",breaks = 10)
+```
 
 
 ## What is the average daily activity pattern?
+```{r}
+plot(tapply(activity$steps,activity$interval,mean,na.rm=TRUE),type="l",xlab="Interval",ylab="Mean number of steps")
+names(which.max(tapply(activity$steps,activity$interval,mean,na.rm=TRUE)))
+```
 
+Mean and median number of steps
+```{r}
+mean(tapply(activity$steps,activity$date,sum,na.rm=TRUE))
+median(tapply(activity$steps,activity$date,sum,na.rm=TRUE))
+```
 
 
 ## Imputing missing values
+Missing values:
+```{r}
+sum(is.na(activity))
+```
+Replacing missing values with the mean number of steps during that interval over all dates.
+```{r}
+meanstep<-tapply(activity$steps,activity$interval,mean,na.rm=TRUE)
+meanstep<-array(meanstep,nrow(activity))
+meanstep<-meanstep[is.na(activity)]
+activity$steps<-replace(activity$steps,which(is.na(activity$steps)),meanstep)
+hist(activity$steps,xlab="Steps",main="Steps per interval")
+```
 
+Mean and median after replacing missing values
+```{r}
+mean(tapply(activity$steps,activity$date,sum))
+median(tapply(activity$steps,activity$date,sum))
+```
 
 
 ## Are there differences in activity patterns between weekdays and weekends?
+```{r}
+library(lattice)
+activity$weekdays<-ifelse(weekdays(activity$date) %in% c('Saturday','Sunday'),"weekend","weekday")
+aggActivity<-aggregate(steps~interval*weekdays,activity,mean)
+xyplot(steps~interval|weekdays,aggActivity,type="l")
+```
+
+We see that there are a differnce.
